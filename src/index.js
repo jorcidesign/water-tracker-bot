@@ -27,8 +27,34 @@ bot.start((ctx) => ctx.reply('¡Tracker 2.0 con Base de Datos activado! 💧'));
 bot.on('text', controller.handleMessage.bind(controller));
 bot.command('ranking', (ctx) => controller.showRanking(ctx));
 
-console.log('Bot iniciado con MongoDB 🚀');
-bot.launch();
+console.log('Iniciando configuración de arranque...');
+
+if (process.env.NODE_ENV === 'production') {
+    // MODO PRODUCCIÓN (RENDER)
+    const port = process.env.PORT || 3000;
+    const domain = process.env.RENDER_EXTERNAL_URL; 
+
+    if (!domain) {
+        throw new Error('Falta RENDER_EXTERNAL_URL en variables de entorno');
+    }
+
+    console.log(`🤖 Iniciando en modo Webhook en puerto ${port}`);
+    
+    // Aquí está la clave: Telegraf levanta un servidor web en el puerto que pide Render
+    bot.launch({
+        webhook: {
+            domain: domain,
+            port: port
+        }
+    }).then(() => {
+        console.log('🚀 Webhook atado exitosamente a Render');
+    });
+
+} else {
+    // MODO DESARROLLO (TU PC)
+    console.log('🤖 Iniciando en modo Long Polling (Local)');
+    bot.launch();
+}
 
 // Graceful Stop
 process.once('SIGINT', () => { bot.stop('SIGINT'); mongoose.disconnect(); });
